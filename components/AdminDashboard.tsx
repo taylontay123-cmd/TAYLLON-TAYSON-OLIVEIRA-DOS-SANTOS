@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Product } from '../types';
 import ProductForm from './ProductForm';
@@ -8,9 +9,10 @@ interface AdminDashboardProps {
   onAddProduct: (product: Omit<Product, 'id'>) => void;
   onUpdateProduct: (product: Product) => void;
   onDeleteProduct: (productId: number) => void;
+  addToast: (message: string, type: 'success' | 'error') => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, onAddProduct, onUpdateProduct, onDeleteProduct }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, onAddProduct, onUpdateProduct, onDeleteProduct, addToast }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -84,6 +86,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, onAddProduct,
           product={editingProduct}
           onSave={handleFormSave}
           onClose={() => setIsFormOpen(false)}
+          addToast={addToast}
         />
       )}
     </div>

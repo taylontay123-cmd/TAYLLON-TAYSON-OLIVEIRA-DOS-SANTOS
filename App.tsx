@@ -138,6 +138,7 @@ Forma de Pagamento: ${details.paymentMethod}
         onAddProduct={addProduct}
         onUpdateProduct={updateProduct}
         onDeleteProduct={deleteProduct}
+        addToast={addToast}
       />;
     }
     return <Menu products={products} onAddToCart={addToCart} />;

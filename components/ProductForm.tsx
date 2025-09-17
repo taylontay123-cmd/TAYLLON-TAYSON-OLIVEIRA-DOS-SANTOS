@@ -1,18 +1,23 @@
+
 import React, { useState, useEffect } from 'react';
 import { Product, Category } from '../types';
+import { SparklesIcon, SpinnerIcon } from './icons/Icons';
+import { GoogleGenAI } from "@google/genai";
 
 interface ProductFormProps {
   product: Product | null;
   onSave: (product: Omit<Product, 'id'> | Product) => void;
   onClose: () => void;
+  addToast: (message: string, type: 'success' | 'error') => void;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onClose }) => {
+const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onClose, addToast }) => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>(Category.Bolos);
   const [imageUrl, setImageUrl] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -40,6 +45,39 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onClose }) =
       reader.readAsDataURL(file);
     }
   };
+
+  const handleGenerateImage = async () => {
+      if (!name) {
+        addToast('Por favor, insira um nome para o produto primeiro.', 'error');
+        return;
+      }
+      setIsGenerating(true);
+      try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const prompt = `fotografia de comida profissional de ${name}, ${description || ''}. Fundo de estúdio limpo, visual delicioso e apetitoso, alta resolução.`;
+        
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: prompt,
+            config: {
+              numberOfImages: 1,
+              outputMimeType: 'image/jpeg',
+              aspectRatio: '1:1',
+            },
+        });
+
+        const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
+        const generatedImageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
+        setImageUrl(generatedImageUrl);
+        addToast('Imagem gerada com sucesso!', 'success');
+      } catch (error) {
+        console.error('Error generating image:', error);
+        addToast('Falha ao gerar imagem. Tente novamente.', 'error');
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,10 +119,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onClose }) =
                     Sem Foto
                   </div>
                 )}
-                <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                <label htmlFor="file-upload" className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-light-brown">
-                    Escolher arquivo
-                </label>
+                <div className="flex flex-col space-y-2">
+                    <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                    <label htmlFor="file-upload" className="cursor-pointer text-center bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-light-brown">
+                        Escolher arquivo
+                    </label>
+                    <button 
+                        type="button" 
+                        onClick={handleGenerateImage} 
+                        disabled={isGenerating} 
+                        className="flex items-center justify-center space-x-2 py-2 px-3 border border-transparent rounded-md shadow-sm text-sm leading-4 font-medium text-white bg-brand-brown hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-brown disabled:bg-gray-400"
+                    >
+                        {isGenerating ? <SpinnerIcon className="text-white"/> : <SparklesIcon />}
+                        <span>{isGenerating ? 'Gerando...' : 'Gerar com IA'}</span>
+                    </button>
+                </div>
               </div>
             </div>
           </div>
