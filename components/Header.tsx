@@ -12,7 +12,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount, onCartClick, onAdminClic
   return (
     <header className="bg-brand-light-brown shadow-md sticky top-0 z-40">
       <div className="container mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-wider" style={{fontFamily: "'Brush Script MT', cursive"}}>
+        <h1 className="text-3xl md:text-4xl font-script text-white tracking-wider">
           Amor in Doces
         </h1>
         <div className="flex items-center space-x-4">

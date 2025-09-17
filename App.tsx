@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo } from 'react';
-import { Product, CartItem, Category } from './types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Product, CartItem, Category, ToastMessage } from './types';
 import { initialProducts } from './data/db';
 import Menu from './components/Menu';
 import Cart from './components/Cart';
@@ -8,14 +8,54 @@ import Header from './components/Header';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import CheckoutModal from './components/CheckoutModal';
+import Toasts from './components/Toasts';
 
 const App: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const savedProducts = localStorage.getItem('amorInDoces:products');
+      return savedProducts ? JSON.parse(savedProducts) : initialProducts;
+    } catch (error) {
+      console.error("Failed to parse products from localStorage", error);
+      return initialProducts;
+    }
+  });
+  
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const savedCart = localStorage.getItem('amorInDoces:cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (error) {
+      console.error("Failed to parse cart from localStorage", error);
+      return [];
+    }
+  });
+
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [view, setView] = useState<'menu' | 'adminLogin'>('menu');
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  useEffect(() => {
+    localStorage.setItem('amorInDoces:products', JSON.stringify(products));
+  }, [products]);
+
+  useEffect(() => {
+    localStorage.setItem('amorInDoces:cart', JSON.stringify(cart));
+  }, [cart]);
+  
+  const addToast = (message: string, type: 'success' | 'error') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      removeToast(id);
+    }, 3000);
+  };
+
+  const removeToast = (id: number) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
 
   const totalItems = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
   const totalPrice = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
@@ -30,6 +70,7 @@ const App: React.FC = () => {
       }
       return [...prevCart, { ...product, quantity: 1 }];
     });
+    addToast(`${product.name} adicionado!`, 'success');
     setIsCartOpen(true);
   };
 
@@ -47,9 +88,9 @@ const App: React.FC = () => {
   const handleAdminLogin = (password: string) => {
     if (password === 'amor123') {
       setIsAdmin(true);
-      setView('menu'); // Go back to menu but now with admin rights
+      setView('menu'); 
     } else {
-      alert('Senha incorreta!');
+      addToast('Senha incorreta!', 'error');
     }
   };
 
@@ -131,6 +172,7 @@ Forma de Pagamento: ${details.paymentMethod}
         onClose={() => setIsCheckoutOpen(false)}
         onSubmit={handleCheckout}
       />
+      <Toasts toasts={toasts} />
     </div>
   );
 };
