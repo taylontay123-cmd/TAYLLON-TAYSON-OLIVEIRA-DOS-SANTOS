@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Product, CartItem, Category, ToastMessage } from './types';
+import { Product, CartItem, ToastMessage } from './types';
 import { initialProducts } from './data/db';
 import Menu from './components/Menu';
 import Cart from './components/Cart';
@@ -10,16 +10,10 @@ import AdminDashboard from './components/AdminDashboard';
 import CheckoutModal from './components/CheckoutModal';
 import Toasts from './components/Toasts';
 
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'amor123';
+
 const App: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(() => {
-    try {
-      const savedProducts = localStorage.getItem('amorInDoces:products');
-      return savedProducts ? JSON.parse(savedProducts) : initialProducts;
-    } catch (error) {
-      console.error("Failed to parse products from localStorage", error);
-      return initialProducts;
-    }
-  });
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -36,10 +30,6 @@ const App: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-  useEffect(() => {
-    localStorage.setItem('amorInDoces:products', JSON.stringify(products));
-  }, [products]);
 
   useEffect(() => {
     localStorage.setItem('amorInDoces:cart', JSON.stringify(cart));
@@ -86,7 +76,7 @@ const App: React.FC = () => {
   };
 
   const handleAdminLogin = (password: string) => {
-    if (password === 'amor123') {
+    if (password === ADMIN_PASSWORD) {
       setIsAdmin(true);
       setView('menu'); 
     } else {
@@ -95,16 +85,21 @@ const App: React.FC = () => {
   };
 
   const addProduct = (product: Omit<Product, 'id'>) => {
-    setProducts(prev => [...prev, { ...product, id: Date.now() }]);
+    const newId = Math.max(...products.map(p => p.id), 0) + 1;
+    const newProduct = { ...product, id: newId };
+    setProducts(prev => [...prev, newProduct]);
+    addToast('Produto adicionado com sucesso!', 'success');
   };
 
   const updateProduct = (updatedProduct: Product) => {
-    setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+    setProducts(prev => prev.map(p => (p.id === updatedProduct.id ? updatedProduct : p)));
+    addToast('Produto atualizado com sucesso!', 'success');
   };
   
   const deleteProduct = (productId: number) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
     setCart(prev => prev.filter(item => item.id !== productId));
+    addToast('Produto excluído com sucesso!', 'success');
   };
   
   const handleCheckout = (details: { name: string; address: string; paymentMethod: string; }) => {

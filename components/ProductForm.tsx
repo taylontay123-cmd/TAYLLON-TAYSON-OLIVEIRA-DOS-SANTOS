@@ -51,9 +51,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onClose, add
         addToast('Por favor, insira um nome para o produto primeiro.', 'error');
         return;
       }
+      
+      const API_KEY = process.env.API_KEY;
+      if (!API_KEY) {
+        addToast('A chave da API do Gemini não foi configurada.', 'error');
+        return;
+      }
+
       setIsGenerating(true);
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
         const prompt = `fotografia de comida profissional de ${name}, ${description || ''}. Fundo de estúdio limpo, visual delicioso e apetitoso, alta resolução.`;
         
         const response = await ai.models.generateImages({
